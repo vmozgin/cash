@@ -22,17 +22,14 @@ public class BookService {
 	private final BookRepository bookRepository;
 	private final BookMapper bookMapper;
 
-	@Caching(evict = {
-			@CacheEvict(value = "titleAndAuthor", allEntries = true),
-			@CacheEvict(value = "category", allEntries = true)
-	})
+	@CacheEvict(value = "filterByCategory", key = "#book.category.name")
 	public BookEntity save(BookEntity book) {
 		return bookRepository.save(book);
 	}
 
 	@Caching(evict = {
-			@CacheEvict(value = "titleAndAuthor", allEntries = true),
-			@CacheEvict(value = "category", allEntries = true)
+			@CacheEvict(value = "findByTitleAndAuthor", allEntries = true),
+			@CacheEvict(value = "filterByCategory", key = "#request.category")
 	})
 	public BookEntity update(BookRequest request, UUID id) {
 		BookEntity newEntity = bookMapper.bookCreateRequestToBookEntity(request);
@@ -44,19 +41,19 @@ public class BookService {
 	}
 
 	@Caching(evict = {
-			@CacheEvict(value = "titleAndAuthor", allEntries = true),
-			@CacheEvict(value = "category", allEntries = true)
+			@CacheEvict(value = "findByTitleAndAuthor", allEntries = true),
+			@CacheEvict(value = "filterByCategory", allEntries = true)
 	})
 	public void deleteById(UUID id) {
 		bookRepository.deleteById(id);
 	}
 
-	@Cacheable(value = "category", key = "#filter.category")
+	@Cacheable(cacheNames = "filterByCategory", key = "#filter.category")
 	public List<BookEntity> filterBy(BooksFilter filter) {
 		return bookRepository.findAll(BookSpecification.withFilter(filter));
 	}
 
-	@Cacheable(value = "titleAndAuthor", key = "#title + #author")
+	@Cacheable(value = "findByTitleAndAuthor", key = "#title + #author")
 	public BookEntity findByTitleAndAuthor(String title, String author) {
 		return bookRepository.findBookEntityByTitleAndAuthor(title, author);
 	}
